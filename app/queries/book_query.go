@@ -39,3 +39,17 @@ func (q *BookQueries) GetBook(id uuid.UUID) (models.Book, error) {
 return book, nil
 }
 
+func (q *BookQueries) CreateBook(b *models.Book) error {
+	query := `INSERT INTO books VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+
+	bookStruct := models.Book{}
+
+	_, err := q.Exec(query, bookStruct)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
