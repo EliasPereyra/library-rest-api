@@ -3,6 +3,7 @@ package queries
 import (
 	"library-rest-api/app/models"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -24,4 +25,17 @@ func (q *BookQueries) GetBooks() ([]models.Book, error) {
 	return books, nil
 }
 
+func (q *BookQueries) GetBook(id uuid.UUID) (models.Book, error) {
+	book := models.Book{}
+
+	query := `SELECT * FROM books WHERE id = $1`
+
+	err := q.Get(&book, query, id)
+
+	if err != nil {
+		return book, err
+	}
+
+return book, nil
+}
 
