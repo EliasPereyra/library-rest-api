@@ -53,3 +53,14 @@ func (q *BookQueries) CreateBook(b *models.Book) error {
 	return nil
 }
 
+func (q *BookQueries) UpdateBook(id uuid.UUID, b *models.Book) error {
+	query := `UPDATE books SET updated_at = $2, title = $3, author = 4, book_status = $5, book_attrs = $6 WHERE id = $1`
+
+	_, err := q.Exec(query, id, b.Updated_At, b.Title, b.Author, b.BookStatus, b.BookAttrs)
+
+	if err != nil {
+		err
+	}
+
+	return nil
+}
