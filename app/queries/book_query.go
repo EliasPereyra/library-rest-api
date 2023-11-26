@@ -64,3 +64,15 @@ func (q *BookQueries) UpdateBook(id uuid.UUID, b *models.Book) error {
 
 	return nil
 }
+
+func (q *BookQueries) DeleteBook(id uuid.UUID) error {
+	query := `DELETE FROM books where id = $1`
+
+	_, err := q.Exec(query, id)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
