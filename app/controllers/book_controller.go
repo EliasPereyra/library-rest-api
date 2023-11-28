@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"library-rest-api/pkg/utils"
+
 	"github.com/gofiber/fiber"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -85,4 +87,80 @@ import (
 			"msg": nil,
 			"book": book,
 		})
+	}
+
+	// Create a book
+	// @Description Create a new book
+	// @Summary create a new book
+	// @Tags Book
+	// @Accept json
+	// @Produce json
+	// @Param title body string true "Title"
+	// @Param author body string true "Author"
+	// @Param book_attrs body models.BookAttrs true "Book attributes"
+	// @Sucess 200 {object} models.Book
+	// @Security ApiKeyAuth
+	// @Router /v1/book [post]
+
+	func CreateBook(c *fiber.Ctx) error {
+		now := time.Now().Unix()
+
+		claims, err := utils.ExtractTokenMetadata(c)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.App{
+				"error": true,
+				"msg": err.Error(),
+			})
+		}
+
+		expires := claims.Expires
+	if now > expires {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": true,
+			"msg": "Unauthorized, the token has expired",
+		})
+	}
+
+	book := &models.Book{}
+
+	if err := c.BodyParaser(book); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": true,
+			"msg": err.Error()
+		})
+	}
+
+	db, err := database.OpenDBConnection()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg": err.Error()
+		})
+	}
+
+	validate := utils.NewValidator()
+
+	book.ID = uuid.New()
+	book.CreatedAt = time.Now()
+	book.BookStatus = 1
+
+	if err := validate.Struct(book); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": true,
+			"msg": utils.ValidatorErrors(err)
+		})
+	}
+
+	if err := db.CreateBook(book); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg": err.Error()
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"error": false,
+		"msg": nil,
+		"book": book
+	})
 	}
