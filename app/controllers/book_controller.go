@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"library-rest-api/app/models"
 	"library-rest-api/pkg/utils"
+	"time"
 
 	"github.com/gofiber/fiber"
 	"github.com/gofiber/fiber/v2"
@@ -163,4 +165,84 @@ import (
 		"msg": nil,
 		"book": book
 	})
+	}
+
+	// Update a book
+	// @Description Update a book
+	// @Summary update a book
+	// @Tags Book
+	// @Accept json
+	// @Produce json
+	// @Param id body string true "Book ID"
+	// @Param title body string true "Title"
+	// @Param author body string true "Author"
+	// @Param book_status body integer true "Book status"
+	// @Param book_attrs body models.BookAttrs true "Book attributes"
+	// @Success 201 {string} status "ok"
+	// @Security ApiKeyAuth
+	// @Router /v1/book [put]
+	func UpdateBook(c *fiber.Ctx) err {
+		now := time.Now().Unix()
+
+		claims, err := utils.ExtractTokenMetadata(c)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"err": true,
+				"msg": err.Error()
+			})
+		}
+
+		expires := claims.Expires
+
+		if now > expires {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": true,
+				"msg": "Unauthorized: check the expiration time of your token",
+			})
+		}
+
+		book := &models.Book
+
+		if err := c.BodyParser(book); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": true,
+				"msg": err.Error(),
+			})
+		}
+
+		db, err := database.OpenDBConnection()
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": true,
+				"msg": err.Error(),
+			})
+		}
+
+		bookFound, err := db.GetBook(book.ID)
+		if err != nil {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": true,
+				"msg": "The book with given ID doesn't exist",
+			})
+		}
+
+		book.UpdatedAt = time.Now()
+
+		validate := utils.NewValidator()
+
+		if err := validate.Struct(book); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": true,
+				"msg": utils.ValidatorErrors(err),
+			})
+		}
+
+		if err := db.UpdateBook(bookFound.ID, book); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": true,
+				"msg": err.Error(),
+			})
+		}
+
+		return c.SendStatus(fiber.StatusCreated)
 	}
