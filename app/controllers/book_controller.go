@@ -5,7 +5,6 @@ import (
 	"library-rest-api/pkg/utils"
 	"time"
 
-	"github.com/gofiber/fiber"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -245,4 +244,78 @@ import (
 		}
 
 		return c.SendStatus(fiber.StatusCreated)
+	}
+
+	// Delete a book
+	// @Description Delete a book with a given ID
+	// @Summary delete a book with a given ID
+	// @Tags Book
+	// @Accept json
+	// @Produce json
+	// @Param id body string true "Book ID"
+	// @Sucess 204 {string} status "ok"
+	// @Security ApiKeyAuth
+	// @Router /v1/book [delete]
+	func DeleteBook(c *fiber.Ctx) error {
+		now := time.Now().Unix()
+
+		claims, err := utils.ExtractTokenMetada(c)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": true,
+				"msg": err.Error(),
+			})
+		}
+
+		expires := claims.Expires
+
+		if now > expires {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": true,
+				"msg": "Unauthorized: check the expiration time of your token",
+			})
+		}
+
+		book := &models.Book{}
+
+		if err := c.BodyParser(book); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": true,
+				"msg": err.Error(),
+			})
+		}
+
+		validate := utils.NewValidator()
+
+		if err := validate.StructPartial(book, "id"); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": true,
+				"msg": utils.ValidatorErrors(err),
+			})
+		}
+
+		db, err := database.OpenDBConnection()
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": true,
+				"msg": err.Error(),
+			})
+		}
+
+		bookFound, err := db.GetBook(book.ID)
+		if err != nil {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": true,
+				"msg": "The book with the given ID wasn't found",
+			})
+		}
+
+		if err := db.DeleteBook(bookFound.ID); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": true,
+				"msg": err.Error(),
+			})
+		}
+
+		return c.SendStatus(fiber.StatusNoContent)
 	}
