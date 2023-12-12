@@ -3,6 +3,7 @@ package controllers
 import (
 	"library-rest-api/app/models"
 	"library-rest-api/pkg/utils"
+	"library-rest-api/platform/database"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -31,7 +32,7 @@ import (
 		books, err := db.GetBooks()
 
 		if err != nil {
-			c.Status(fiber.StatusNotFound).JSON(fiber.App{
+			c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": true,
 				"msg": "There are no books",
 				"count": 0,
@@ -83,7 +84,7 @@ import (
 			})
 		}
 
-		return c.Status(fiber.Map{
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"error": false,
 			"msg": nil,
 			"book": book,
@@ -108,7 +109,7 @@ import (
 
 		claims, err := utils.ExtractTokenMetadata(c)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.App{
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": true,
 				"msg": err.Error(),
 			})
@@ -124,10 +125,10 @@ import (
 
 	book := &models.Book{}
 
-	if err := c.BodyParaser(book); err != nil {
+	if err := c.BodyParser(book); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": true,
-			"msg": err.Error()
+			"msg": err.Error(),
 		})
 	}
 
@@ -135,34 +136,34 @@ import (
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
-			"msg": err.Error()
+			"msg": err.Error(),
 		})
 	}
 
 	validate := utils.NewValidator()
 
 	book.ID = uuid.New()
-	book.CreatedAt = time.Now()
+	book.Created_At = time.Now()
 	book.BookStatus = 1
 
 	if err := validate.Struct(book); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": true,
-			"msg": utils.ValidatorErrors(err)
+			"msg": utils.ValidatorErrors(err),
 		})
 	}
 
 	if err := db.CreateBook(book); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
-			"msg": err.Error()
+			"msg": err.Error(),
 		})
 	}
 
 	return c.JSON(fiber.Map{
 		"error": false,
 		"msg": nil,
-		"book": book
+		"book": book,
 	})
 	}
 
@@ -180,14 +181,14 @@ import (
 	// @Success 201 {string} status "ok"
 	// @Security ApiKeyAuth
 	// @Router /v1/book [put]
-	func UpdateBook(c *fiber.Ctx) err {
+	func UpdateBook(c *fiber.Ctx) error {
 		now := time.Now().Unix()
 
 		claims, err := utils.ExtractTokenMetadata(c)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"err": true,
-				"msg": err.Error()
+				"msg": err.Error(),
 			})
 		}
 
@@ -200,7 +201,7 @@ import (
 			})
 		}
 
-		book := &models.Book
+		book := &models.Book{}
 
 		if err := c.BodyParser(book); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -225,7 +226,7 @@ import (
 			})
 		}
 
-		book.UpdatedAt = time.Now()
+		book.Updated_At = time.Now()
 
 		validate := utils.NewValidator()
 
@@ -259,7 +260,7 @@ import (
 	func DeleteBook(c *fiber.Ctx) error {
 		now := time.Now().Unix()
 
-		claims, err := utils.ExtractTokenMetada(c)
+		claims, err := utils.ExtractTokenMetadata(c)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": true,
