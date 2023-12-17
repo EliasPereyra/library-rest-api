@@ -10,9 +10,9 @@ import (
 func PrivateRoutes(a *fiber.App) {
 	route := a.Group("/api/v1")
 
-	route.Post("/book", middleware.JWTProtected(), controllers.CreateBook())
+	route.Post("/book", middleware.JWTProtected(), controllers.CreateBook)
 
-	route.Put("/book", middleware.JWTProtected(), controllers.UpdateBook())
+	route.Put("/book", middleware.JWTProtected(), controllers.UpdateBook)
 
-	route.Delete("/book", middleware.JWTProtected(), controllers.DeleteBook())
+	route.Delete("/book", middleware.JWTProtected(), controllers.DeleteBook)
 }
