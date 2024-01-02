@@ -16,18 +16,18 @@ type Book struct {
   UserId	uuid.UUID       `db:"user_id" json:"user_id" validate:"required,uuid"` 
   Title		string          `db:"title" json:"title" validate:"required,lte=255"`
   Author	string          `db:"author" json:"author" validate:"required,lte=255"`
-  BookStatus	int         `db:"book_status" json:"book_status" validate="required,len=1"`
-  BookAttrs	BookAttrs     `db:"book_attrs" json:"book_attrs" validate="required,dive"`
+  BookStatus	int         `db:"book_status" json:"book_status" validate:"required,len=1"`
+  BookAttrs	BookAttrs     `db:"book_attrs" json:"book_attrs" validate:"required,dive"`
 }
 
 type BookAttrs struct {
   Picture     string      `json:"picture"`
-  Description string      `json::"description"`
-  Rating      int         `json:"rating" validate="min=1,max=10`
+  Description string      `json:"description"`
+  Rating      int         `json:"rating" validate:"min=1,max=10"`
 }
 
 func (b BookAttrs) Value() (driver.Value, error) {
-  return json.Marshall(b)
+  return json.Marshal(b)
 }
 
 func (b *BookAttrs) Scan(value interface{}) error {
@@ -37,5 +37,5 @@ func (b *BookAttrs) Scan(value interface{}) error {
     return errors.New("Type assertion to []byte failed")
   }
 
-  return json.Unmarshall(j, &b)
+  return json.Unmarshal(j, &b)
 }
