@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"library-rest-api/pkg/utils"
+
 	"github.com/gofiber/fiber/v2"
 )
 
