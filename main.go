@@ -1,6 +1,15 @@
 package main
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"library-rest-api/pkg/configs"
+	"library-rest-api/pkg/middleware"
+	"library-rest-api/pkg/routes"
+	"library-rest-api/pkg/utils"
+
+	"github.com/gofiber/fiber/v2"
+
+	_ "github.com/joho/godotenv/autoload"
+)
 
 // @title API
 // @version 1.0
@@ -21,10 +30,10 @@ func main() {
 
 	middleware.FiberMiddleware(app)
 
-	routes.SwaggerRoutes(app)
+	routes.SwaggerRoute(app)
 	routes.PublicRoutes(app)
 	routes.PrivateRoutes(app)
 	routes.NotFoundRoute(app)
 
-	utils.StartServerWithGraceShutdown(app)
+	utils.StartServerWithGracefulShutdown(app)
 }
